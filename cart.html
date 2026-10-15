@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart & Checkout - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-cart3 text-success me-2"></i> Your Shopping Cart & Checkout</h1>
+            <p>Direct farm purchase with Razorpay secure payment gateway.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('buyer_marketplace') }}" class="btn btn-outline">
+                <i class="bi bi-arrow-left me-1"></i> Continue Shopping
+            </a>
+        </div>
+    </div>
+
+    {% if cart_items %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px; align-items: start;">
+        <!-- Cart Items List -->
+        <div class="card">
+            <div class="card-title">
+                <i class="bi bi-box-seam me-2"></i> Cart Items
+                <span class="title-badge">{{ cart_items|length }} Items</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                {% for item in cart_items %}
+                <div style="display: flex; gap: 16px; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+                    <img src="{{ item.image_url or 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=120' }}" alt="{{ item.item_name }}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover; border: 1px solid #e5e7eb;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1.05rem; color: #111827;">{{ item.item_name }}</div>
+                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 2px;">
+                            Seller: {{ item.seller_name }} ({{ item.seller_role | capitalize }})
+                        </div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #166534; margin-top: 4px;">
+                            ₹{{ item.unit_price }} × {{ item.quantity }} = ₹{{ "%.2f"|format(item.total_price) }}
+                        </div>
+                    </div>
+                    <div>
+                        <form action="{{ url_for('remove_from_cart', cart_id=item.cart_id) }}" method="POST">
+                            <button type="submit" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: #fca5a5;">
+                                <i class="bi bi-trash3 me-1"></i> Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Checkout & Payment Form -->
+        <div class="card">
+            <div class="card-title">
+                <i class="bi bi-credit-card-2-front me-2"></i> Delivery & Payment
+            </div>
+
+            <form id="checkout-form" action="{{ url_for('place_order') }}" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="buyer_name">Receiver Name *</label>
+                    <input type="text" id="buyer_name" name="buyer_name" class="form-control" value="{{ session.get('user_name', '') }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="buyer_phone">Mobile Number for Delivery Updates *</label>
+                    <input type="tel" id="buyer_phone" name="buyer_phone" class="form-control" value="{{ user.phone or '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="delivery_address">Delivery Address (House/Shop No, Street, Village) *</label>
+                    <textarea id="delivery_address" name="delivery_address" rows="2" class="form-control" required placeholder="e.g. #14, North Car Street, Vilathikulam"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="district">District *</label>
+                    <input type="text" id="district" name="district" class="form-control" value="{{ user.district or 'thenkasi' }}" required>
+                </div>
+
+                <!-- Price Summary -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 18px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.92rem; color: #4b5563;">
+                        <span>Produce Subtotal:</span>
+                        <span>₹{{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.92rem; color: #4b5563;">
+                        <span>Direct Farm Delivery:</span>
+                        <span style="color: #15803d; font-weight: 600;">FREE</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid #cbd5e1; font-size: 1.25rem; font-weight: 800; color: #166534;">
+                        <span>Total Payable:</span>
+                        <span>₹{{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                </div>
+
+                <!-- Payment Selection -->
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #22c55e; border-radius: 8px; background: #f0fdf4; cursor: pointer;">
+                            <input type="radio" name="payment_method" value="Razorpay" checked>
+                            <div>
+                                <div style="font-weight: 700; color: #166534;">Razorpay Payment Gateway (Recommended)</div>
+                                <div style="font-size: 0.8rem; color: #4b5563;">UPI (Google Pay / PhonePe / Paytm), Debit/Credit Cards, Netbanking</div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; cursor: pointer;">
+                            <input type="radio" name="payment_method" value="Cash on Delivery">
+                            <div>
+                                <div style="font-weight: 600; color: #374151;">Cash on Delivery (COD)</div>
+                                <div style="font-size: 0.8rem; color: #6b7280;">Pay upon farm produce delivery</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="button" id="btn-pay-now" class="btn btn-orange btn-lg btn-block" style="margin-top: 20px;">
+                    <i class="bi bi-lock-fill me-1"></i> Pay ₹{{ "%.2f"|format(subtotal) }} & Place Order
+                </button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 3rem; color: #94a3b8; margin-bottom: 14px;"><i class="bi bi-cart-x"></i></div>
+        <h2>Your Shopping Cart is Empty</h2>
+        <p style="color: #6b7280; margin: 10px auto 24px; max-width: 450px;">
+            Explore fresh crops direct from verified farmers or agricultural supplies from nearby shops.
+        </p>
+        <a href="{{ url_for('buyer_marketplace') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-shop me-1"></i> Explore Marketplace
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const payBtn = document.getElementById('btn-pay-now');
+    const form = document.getElementById('checkout-form');
+
+    if (payBtn && form) {
+        payBtn.addEventListener('click', function () {
+            // Validate required inputs
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const paymentMethod = form.querySelector('input[name="payment_method"]:checked').value;
+            const buyerName = document.getElementById('buyer_name').value;
+            const buyerPhone = document.getElementById('buyer_phone').value;
+            const totalAmount = {{ subtotal }};
+
+            if (paymentMethod === 'Razorpay') {
+                payBtn.disabled = true;
+                payBtn.innerHTML = 'Connecting to Razorpay...';
+
+                fetch("{{ url_for('create_razorpay_order') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: totalAmount
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = `<i class="bi bi-lock-fill me-1"></i> Pay ₹${totalAmount.toFixed(2)} & Place Order`;
+
+                    initiateRazorpayPayment({
+                        key_id: data.key_id || "{{ razorpay_key_id }}",
+                        order_id: data.order_id,
+                        razorpay_order_id: data.order_id,
+                        amount_in_paise: data.amount_in_paise,
+                        description: 'Sakthi Agri Produce Order',
+                        buyer_name: buyerName,
+                        buyer_phone: buyerPhone,
+                        buyer_email: "{{ session.get('user_email', '') }}",
+                        callback_url: "{{ url_for('place_order') }}",
+                        order_number: 'ORD-' + Date.now()
+                    });
+                })
+                .catch(err => {
+                    console.error('Error initiating Razorpay order:', err);
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = `<i class="bi bi-lock-fill me-1"></i> Pay ₹${totalAmount.toFixed(2)} & Place Order`;
+
+                    initiateRazorpayPayment({
+                        key_id: "{{ razorpay_key_id }}",
+                        amount_in_paise: Math.round(totalAmount * 100),
+                        description: 'Sakthi Agri Produce Order',
+                        buyer_name: buyerName,
+                        buyer_phone: buyerPhone,
+                        buyer_email: "{{ session.get('user_email', '') }}",
+                        callback_url: "{{ url_for('place_order') }}",
+                        order_number: 'ORD-' + Date.now()
+                    });
+                });
+            } else {
+                // Submit standard form for Cash on Delivery
+                form.submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

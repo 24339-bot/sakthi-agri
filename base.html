@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sakthi Agri - Direct Agricultural Platform{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Bootstrap Icons for Clean Professional Iconography -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Razorpay Checkout Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        {% if session.get('user_id') %}
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-brand">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Sakthi Agri Logo" style="width: 34px; height: 34px; border-radius: 6px; object-fit: contain; background: #ffffff; padding: 2px;">
+                    <span class="brand-text">Sakthi Agri</span>
+                </div>
+                <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Toggle navigation">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-collapse-wrapper" id="sidebarCollapseWrapper">
+                <ul class="sidebar-menu">
+                {% set role = session.get('role') %}
+
+                {% if role == 'farmer' %}
+                    <!-- Farmer Menu (Matches Screenshots 2 & 3) -->
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('farmer_dashboard') }}" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-grid-fill"></i></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('add_crop') }}" class="sidebar-link {% if active_page == 'add_crop' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-plus-circle-fill"></i></span>
+                            <span>Add Crop</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('my_crops') }}" class="sidebar-link {% if active_page == 'my_crops' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-flower2"></i></span>
+                            <span>My Crops</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('farmer_orders') }}" class="sidebar-link {% if active_page == 'orders' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-box-seam-fill"></i></span>
+                            <span>Orders</span>
+                            {% if pending_orders_count and pending_orders_count > 0 %}
+                            <span class="badge badge-accent">{{ pending_orders_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('nearby_agri_shops') }}" class="sidebar-link {% if active_page == 'nearby_shops' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-shop"></i></span>
+                            <span>Nearby Agri Shops</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('nearby_machinery') }}" class="sidebar-link {% if active_page == 'nearby_machinery' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-truck"></i></span>
+                            <span>Nearby Machinery</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('nearby_godowns') }}" class="sidebar-link {% if active_page == 'nearby_godowns' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-building"></i></span>
+                            <span>Nearby Godowns</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('profile') }}" class="sidebar-link {% if active_page == 'profile' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-person-fill"></i></span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+
+                {% elif role == 'agri_shop' %}
+                    <!-- Agri Shop Menu (Matches Screenshot 1) -->
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('agri_shop_dashboard') }}" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-grid-fill"></i></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('add_product') }}" class="sidebar-link {% if active_page == 'add_product' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-plus-circle-fill"></i></span>
+                            <span>Add Product</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('view_products') }}" class="sidebar-link {% if active_page == 'view_products' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-basket2-fill"></i></span>
+                            <span>View Products</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('manage_stock') }}" class="sidebar-link {% if active_page == 'manage_stock' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-boxes"></i></span>
+                            <span>Manage Stock</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('shop_orders') }}" class="sidebar-link {% if active_page == 'orders' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-receipt"></i></span>
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('profile') }}" class="sidebar-link {% if active_page == 'profile' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-person-fill"></i></span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+
+                {% elif role == 'machinery' %}
+                    <!-- Machinery Owner Menu -->
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('machinery_dashboard') }}" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-grid-fill"></i></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('add_machinery') }}" class="sidebar-link {% if active_page == 'add_machinery' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-plus-circle-fill"></i></span>
+                            <span>Add Machinery</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('machinery_orders') }}" class="sidebar-link {% if active_page == 'orders' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-receipt"></i></span>
+                            <span>My Orders</span>
+                            {% if pending_orders_count and pending_orders_count > 0 %}
+                            <span class="badge badge-accent">{{ pending_orders_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('profile') }}" class="sidebar-link {% if active_page == 'profile' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-person-fill"></i></span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+
+                {% elif role == 'godown' %}
+                    <!-- Godown Owner Menu -->
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('godown_dashboard') }}" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-grid-fill"></i></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('add_godown') }}" class="sidebar-link {% if active_page == 'add_godown' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-plus-circle-fill"></i></span>
+                            <span>Add Godown</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('godown_orders') }}" class="sidebar-link {% if active_page == 'orders' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-receipt"></i></span>
+                            <span>My Orders</span>
+                            {% if pending_orders_count and pending_orders_count > 0 %}
+                            <span class="badge badge-accent">{{ pending_orders_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('profile') }}" class="sidebar-link {% if active_page == 'profile' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-person-fill"></i></span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+
+                {% else %}
+                    <!-- Buyer Menu (E-Commerce) -->
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('buyer_marketplace') }}" class="sidebar-link {% if active_page == 'marketplace' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-shop-window"></i></span>
+                            <span>Marketplace</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('view_cart') }}" class="sidebar-link {% if active_page == 'cart' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-cart3"></i></span>
+                            <span>My Cart</span>
+                            {% if cart_count and cart_count > 0 %}
+                            <span class="badge badge-accent">{{ cart_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('buyer_orders') }}" class="sidebar-link {% if active_page == 'orders' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-journal-text"></i></span>
+                            <span>My Orders</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="{{ url_for('profile') }}" class="sidebar-link {% if active_page == 'profile' %}active{% endif %}">
+                            <span class="menu-icon"><i class="bi bi-person-fill"></i></span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <!-- Universal Logout -->
+                <li class="sidebar-item" style="margin-top: auto;">
+                    <a href="{{ url_for('logout') }}" class="sidebar-link" style="color: #fca5a5;">
+                        <span class="menu-icon"><i class="bi bi-box-arrow-right"></i></span>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user-pill">
+                    <div class="user-pill-avatar">
+                        {{ session.get('user_name', 'U')[0] | upper }}
+                    </div>
+                    <div class="user-pill-info">
+                        <div class="user-pill-name">{{ session.get('user_name', 'User') }}</div>
+                        <div class="user-pill-role">{{ session.get('role', 'Member') | replace('_', ' ') }}</div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Main Workspace Content -->
+        <main class="app-main" style="{% if not session.get('user_id') %}max-width: 100%; width: 100%; padding: 0;{% endif %}">
+            <!-- Flash Message Alerts -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages" style="{% if not session.get('user_id') %}position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; width: 92%; max-width: 520px; margin: 0;{% endif %}">
+                    {% for category, message in messages %}
+                    <div class="flash-alert flash-{{ category }}" style="box-shadow: 0 10px 25px rgba(0,0,0,0.18);">
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit;">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

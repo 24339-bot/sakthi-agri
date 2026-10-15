@@ -1,0 +1,771 @@
+{% extends "base.html" %}
+
+{% block title %}Sakthi Agri - Direct Agricultural Platform{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+    /* Reset wrapper so fixed video background is never clipped */
+    .landing-wrapper {
+        position: relative;
+        color: #ffffff;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Fixed Full-Screen Video Background Layer (Never scrolls off or turns black) */
+    .scrolly-fixed-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        overflow: hidden;
+        background: #0b130e url("{{ url_for('static', filename='videos/frames/frame_000.jpg') }}") center center / cover no-repeat;
+    }
+
+    #scrollyCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: 1;
+    }
+
+    /* Cinematic Gradient Vignette for crisp text contrast */
+    .scrolly-vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        background:
+            linear-gradient(90deg, rgba(8, 16, 11, 0.84) 0%, rgba(8, 16, 11, 0.45) 50%, rgba(8, 16, 11, 0.18) 100%),
+            linear-gradient(180deg, rgba(8, 16, 11, 0.55) 0%, rgba(8, 16, 11, 0.15) 35%, rgba(8, 16, 11, 0.65) 100%);
+        pointer-events: none;
+    }
+
+    /* Top Scroll Progress Bar */
+    .scrolly-progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #22c55e, #f59e0b);
+        width: 0%;
+        z-index: 1002;
+        transition: width 0.05s linear;
+    }
+
+    /* Floating Glassmorphic Navbar */
+    .scrolly-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 48px;
+        background: rgba(8, 16, 11, 0.65);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .scrolly-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: #ffffff;
+    }
+
+    .scrolly-brand img {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 2px;
+        object-fit: contain;
+    }
+
+    .scrolly-brand-text {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: #ffffff;
+    }
+
+    .scrolly-nav-links {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .scrolly-nav-links a {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        text-decoration: none;
+        transition: color 0.2s ease;
+        cursor: pointer;
+    }
+
+    .scrolly-nav-links a:hover,
+    .scrolly-nav-links a.active {
+        color: #fbbf24;
+    }
+
+    .scrolly-nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-nav-outline {
+        padding: 8px 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: #ffffff;
+        font-size: 0.82rem;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.08);
+        transition: all 0.25s ease;
+        text-decoration: none;
+    }
+
+    .btn-nav-outline:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #ffffff;
+        color: #ffffff;
+    }
+
+    .btn-nav-gold {
+        padding: 8px 20px;
+        border-radius: 999px;
+        border: 1px solid #f59e0b;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: #ffffff;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        transition: all 0.25s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    }
+
+    .btn-nav-gold:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+        color: #ffffff;
+    }
+
+    /* Scrollable Story Stream (Sits above the fixed video canvas) */
+    .scrolly-content-stream {
+        position: relative;
+        z-index: 3;
+    }
+
+    .story-section {
+        min-height: 100vh;
+        width: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 110px 56px 80px;
+        display: flex;
+        align-items: center;
+    }
+
+    .story-card-glass {
+        max-width: 580px;
+        background: rgba(10, 20, 14, 0.58);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 24px;
+        padding: 44px 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        transition: transform 0.4s ease, border-color 0.4s ease;
+    }
+
+    .story-card-glass:hover {
+        border-color: rgba(251, 191, 36, 0.4);
+    }
+
+    .chapter-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #fbbf24;
+        background: rgba(251, 191, 36, 0.14);
+        border: 1px solid rgba(251, 191, 36, 0.35);
+        padding: 6px 14px;
+        border-radius: 999px;
+        margin-bottom: 20px;
+    }
+
+    .chapter-heading {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+        font-weight: 600;
+        line-height: 1.1;
+        color: #ffffff;
+        margin-bottom: 20px;
+        letter-spacing: -0.5px;
+    }
+
+    .chapter-heading em {
+        font-style: italic;
+        font-weight: 400;
+        color: #fde68a;
+        display: block;
+    }
+
+    .chapter-body {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.88);
+        margin-bottom: 28px;
+        font-weight: 400;
+    }
+
+    .chapter-metrics {
+        display: flex;
+        gap: 32px;
+        margin-top: 22px;
+        padding-top: 22px;
+        border-top: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .metric-item strong {
+        display: block;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #4ade80;
+    }
+
+    .metric-item span {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.75);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    /* Right-side Fixed Navigation Dots */
+    .scrolly-dots {
+        position: fixed;
+        right: 36px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 900;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .scrolly-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .scrolly-dot.active {
+        height: 30px;
+        border-radius: 99px;
+        background: #fbbf24;
+        border-color: #fbbf24;
+    }
+
+    /* Scroll Prompt at Bottom Left */
+    .scrolly-prompt {
+        position: fixed;
+        bottom: 28px;
+        left: 56px;
+        z-index: 900;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: opacity 0.4s ease;
+        pointer-events: none;
+    }
+
+    .mouse-icon {
+        width: 22px;
+        height: 34px;
+        border: 2px solid rgba(255, 255, 255, 0.65);
+        border-radius: 12px;
+        position: relative;
+    }
+
+    .mouse-wheel {
+        width: 3px;
+        height: 7px;
+        background: #fbbf24;
+        border-radius: 2px;
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: scrollWheel 1.6s infinite;
+    }
+
+    @keyframes scrollWheel {
+        0% { opacity: 1; transform: translate(-50%, 0); }
+        100% { opacity: 0; transform: translate(-50%, 12px); }
+    }
+
+    /* Ecosystem Section (Glassmorphic over the sunset field) */
+    .ecosystem-section {
+        position: relative;
+        z-index: 3;
+        padding: 100px 24px 80px;
+        background: linear-gradient(180deg, rgba(8, 16, 11, 0.3) 0%, rgba(8, 16, 11, 0.88) 100%);
+    }
+
+    .pillar-card {
+        background: rgba(15, 28, 19, 0.72);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 18px;
+        padding: 36px 28px;
+        transition: all 0.3s ease;
+        color: #ffffff;
+    }
+
+    .pillar-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(74, 222, 128, 0.5);
+        background: rgba(15, 28, 19, 0.85);
+    }
+
+    @media (max-width: 768px) {
+        .scrolly-navbar {
+            padding: 14px 20px;
+        }
+        .scrolly-nav-links {
+            display: none;
+        }
+        .story-section {
+            padding: 96px 20px 60px;
+        }
+        .story-card-glass {
+            padding: 28px 24px;
+        }
+        .scrolly-dots {
+            right: 14px;
+        }
+        .scrolly-prompt {
+            left: 20px;
+            bottom: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="landing-wrapper">
+    <!-- Top Scroll Progress Line -->
+    <div class="scrolly-progress-bar" id="scrollyProgressBar"></div>
+
+    <!-- Fixed Full-Screen Video Canvas (100% Continuous Flow Across All Sections) -->
+    <div class="scrolly-fixed-bg">
+        <canvas id="scrollyCanvas"></canvas>
+        <div class="scrolly-vignette"></div>
+    </div>
+
+    <!-- Floating Glassmorphic Navbar -->
+    <nav class="scrolly-navbar">
+        <a href="#the-harvest" class="scrolly-brand">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Sakthi Agri Logo">
+            <span class="scrolly-brand-text">Sakthi Agri</span>
+        </a>
+
+        <ul class="scrolly-nav-links">
+            <li><a href="#the-harvest" id="navLink0" class="active">The Harvest</a></li>
+            <li><a href="#government-msp" id="navLink1">Government MSP</a></li>
+            <li><a href="#smart-fleet" id="navLink2">Smart Fleet</a></li>
+            <li><a href="#direct-order" id="navLink3">Direct Order</a></li>
+            <li><a href="#ecosystem-pillars" id="navLink4">Ecosystem</a></li>
+        </ul>
+
+        <div class="scrolly-nav-actions">
+            <a href="{{ url_for('login') }}" class="btn-nav-outline">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Login
+            </a>
+            <a href="{{ url_for('buyer_marketplace') }}" class="btn-nav-gold">
+                Order Now
+            </a>
+        </div>
+    </nav>
+
+    <!-- Right-Side Scroll Indicator Dots -->
+    <div class="scrolly-dots">
+        <a href="#the-harvest" class="scrolly-dot active" title="The Harvest"></a>
+        <a href="#government-msp" class="scrolly-dot" title="Government MSP"></a>
+        <a href="#smart-fleet" class="scrolly-dot" title="Smart Fleet"></a>
+        <a href="#direct-order" class="scrolly-dot" title="Direct Order"></a>
+        <a href="#ecosystem-pillars" class="scrolly-dot" title="Ecosystem"></a>
+    </div>
+
+    <!-- Bottom Scroll Prompt -->
+    <div class="scrolly-prompt" id="scrollyPrompt">
+        <div class="mouse-icon">
+            <div class="mouse-wheel"></div>
+        </div>
+        <span>Scroll up &amp; down to control video flow</span>
+    </div>
+
+    <!-- Continuous Scrollable Story Sections Over the Single Continuous Video -->
+    <div class="scrolly-content-stream" id="scrollyStream">
+
+        <!-- Section 1: The Harvest (Frames 000 - 030) -->
+        <section id="the-harvest" class="story-section" data-index="0">
+            <div class="story-card-glass">
+                <div class="chapter-eyebrow">
+                    <i class="bi bi-flower2"></i> 01 / The Harvest
+                </div>
+                <h1 class="chapter-heading">
+                    Into the
+                    <em>golden fields.</em>
+                </h1>
+                <p class="chapter-body">
+                    Cultivated with passion across Tamil Nadu's fertile farmlands. Every crop is nurtured from seed to harvest and connected directly from verified farmers to your table.
+                </p>
+                <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                    <a href="{{ url_for('buyer_marketplace') }}" class="btn btn-orange btn-lg" style="display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 12px 28px;">
+                        <i class="bi bi-cart3"></i>
+                        <span>Browse Marketplace</span>
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn-nav-outline" style="padding: 12px 26px; display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Join Platform</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Government MSP (Frames 031 - 060) -->
+        <section id="government-msp" class="story-section" data-index="1">
+            <div class="story-card-glass">
+                <div class="chapter-eyebrow">
+                    <i class="bi bi-shield-check"></i> 02 / Government MSP Shield
+                </div>
+                <h2 class="chapter-heading">
+                    Honest value,
+                    <em>zero middlemen.</em>
+                </h2>
+                <p class="chapter-body">
+                    Crop prices are protected by official Government Minimum Support Price (MSP) benchmarks. Farmers receive 100% of their rightful earnings while buyers get transparent farm-gate rates.
+                </p>
+                <div class="chapter-metrics">
+                    <div class="metric-item">
+                        <strong>100%</strong>
+                        <span>Direct Farmer Payout</span>
+                    </div>
+                    <div class="metric-item">
+                        <strong>MSP</strong>
+                        <span>Official Rate Sync</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Smart Fleet (Frames 061 - 090) -->
+        <section id="smart-fleet" class="story-section" data-index="2">
+            <div class="story-card-glass">
+                <div class="chapter-eyebrow">
+                    <i class="bi bi-truck"></i> 03 / Smart Fleet &amp; Storage
+                </div>
+                <h2 class="chapter-heading">
+                    Modern machinery
+                    <em>&amp; cold chain.</em>
+                </h2>
+                <p class="chapter-body">
+                    From booking high-power tractors, rotavators, and combine harvesters to reserving climate-controlled godowns and purchasing certified seeds from nearby agri shops.
+                </p>
+                <div class="chapter-metrics">
+                    <div class="metric-item">
+                        <strong>24/7</strong>
+                        <span>Cold Chain Godowns</span>
+                    </div>
+                    <div class="metric-item">
+                        <strong>Instant</strong>
+                        <span>Tractor &amp; Fleet Booking</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Direct Order (Frames 091 - 119) -->
+        <section id="direct-order" class="story-section" data-index="3">
+            <div class="story-card-glass">
+                <div class="chapter-eyebrow">
+                    <i class="bi bi-lightning-charge-fill"></i> 04 / Direct Order
+                </div>
+                <h2 class="chapter-heading">
+                    From farm gate
+                    <em>to doorstep.</em>
+                </h2>
+                <p class="chapter-body">
+                    Place bulk or retail produce orders with Razorpay UPI &amp; card checkout. Track every milestone live from farmer approval to dispatch and final delivery.
+                </p>
+                <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                    <a href="{{ url_for('buyer_marketplace') }}" class="btn btn-orange btn-lg" style="display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 12px 28px;">
+                        <i class="bi bi-bag-check-fill"></i>
+                        <span>Order Fresh Produce</span>
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn-nav-outline" style="padding: 12px 26px; display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-grid-fill"></i>
+                        <span>Dashboard Login</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: 4 Pillars Ecosystem -->
+        <section id="ecosystem-pillars" class="ecosystem-section" data-index="4">
+            <div style="max-width: 1200px; margin: 0 auto;">
+                <div style="text-align: center; margin-bottom: 56px;">
+                    <span class="chapter-eyebrow">
+                        <i class="bi bi-layers-fill"></i> Complete Ecosystem
+                    </span>
+                    <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 2.6rem; font-weight: 700; color: #ffffff; margin-top: 8px;">
+                        Comprehensive Agricultural Platform
+                    </h2>
+                    <p style="color: rgba(255, 255, 255, 0.78); font-size: 1.05rem; margin-top: 8px; max-width: 640px; margin-left: auto; margin-right: auto;">
+                        Four specialized portals working in harmony for farmers, agro dealers, machinery owners, and buyers.
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px;">
+                    <!-- Pillar 1 -->
+                    <div class="pillar-card">
+                        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(34, 197, 94, 0.18); color: #4ade80; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.6rem; border: 1px solid rgba(74, 222, 128, 0.35);">
+                            <i class="bi bi-flower2"></i>
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 10px;">Farmer Direct Selling</h3>
+                        <p style="color: rgba(255, 255, 255, 0.78); font-size: 0.94rem; line-height: 1.6;">
+                            Upload crops with automatic Government MSP pricing, receive buyer orders, and accept or dispatch shipments directly.
+                        </p>
+                    </div>
+
+                    <!-- Pillar 2 -->
+                    <div class="pillar-card">
+                        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(59, 130, 246, 0.18); color: #60a5fa; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.6rem; border: 1px solid rgba(96, 165, 250, 0.35);">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 10px;">Agri Shop Network</h3>
+                        <p style="color: rgba(255, 255, 255, 0.78); font-size: 0.94rem; line-height: 1.6;">
+                            Local agro dealers list certified seeds, fertilizers, organic pesticides, and sprayers with live inventory control.
+                        </p>
+                    </div>
+
+                    <!-- Pillar 3 -->
+                    <div class="pillar-card">
+                        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(245, 158, 11, 0.18); color: #fbbf24; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.6rem; border: 1px solid rgba(251, 191, 36, 0.35);">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 10px;">Machinery Rental</h3>
+                        <p style="color: rgba(255, 255, 255, 0.78); font-size: 0.94rem; line-height: 1.6;">
+                            Locate and book tractors, combine harvesters, rotavators, and tillers per hour or per acre near your village.
+                        </p>
+                    </div>
+
+                    <!-- Pillar 4 -->
+                    <div class="pillar-card">
+                        <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(168, 85, 247, 0.18); color: #c084fc; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.6rem; border: 1px solid rgba(192, 132, 252, 0.35);">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 10px;">Godowns &amp; Cold Storage</h3>
+                        <p style="color: rgba(255, 255, 255, 0.78); font-size: 0.94rem; line-height: 1.6;">
+                            Preserve harvest quality in temperature-controlled cold storages and dry warehouses with instant capacity booking.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer style="position: relative; z-index: 3; background: rgba(6, 12, 8, 0.94); color: #ffffff; padding: 36px 24px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="bi bi-shield-check text-success"></i> Sakthi Agri Platform
+            </div>
+            <p style="font-size: 0.88rem; color: rgba(255,255,255,0.65); margin-top: 4px;">
+                © 2026 Sakthi Agri. Dedicated to sustainable prosperity for farmers and agricultural trade.
+            </p>
+        </footer>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const canvas = document.getElementById('scrollyCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const progressBar = document.getElementById('scrollyProgressBar');
+    const promptEl = document.getElementById('scrollyPrompt');
+
+    // 120 frames covering 100% of the continuous tractor video (000 to 119)
+    const totalFrames = 120;
+    const frames = new Array(totalFrames);
+    let currentFrame = 0;
+    let targetFrame = 0;
+    let lastDrawnFrame = -1;
+
+    function getNearestLoadedFrame(targetIdx) {
+        const idx = Math.max(0, Math.min(totalFrames - 1, Math.round(targetIdx)));
+        if (frames[idx] && frames[idx].complete && frames[idx].naturalWidth > 0) {
+            return frames[idx];
+        }
+        // Search nearest loaded frame so canvas is NEVER blank
+        for (let offset = 1; offset < totalFrames; offset++) {
+            const prev = idx - offset;
+            if (prev >= 0 && frames[prev] && frames[prev].complete && frames[prev].naturalWidth > 0) {
+                return frames[prev];
+            }
+            const next = idx + offset;
+            if (next < totalFrames && frames[next] && frames[next].complete && frames[next].naturalWidth > 0) {
+                return frames[next];
+            }
+        }
+        return null;
+    }
+
+    function drawFrame(index) {
+        const img = getNearestLoadedFrame(index);
+        if (!img) return;
+
+        const cw = canvas.width;
+        const ch = canvas.height;
+        const iw = img.naturalWidth;
+        const ih = img.naturalHeight;
+
+        const scale = Math.max(cw / iw, ch / ih);
+        const nw = iw * scale;
+        const nh = ih * scale;
+        const ox = (cw - nw) / 2;
+        const oy = (ch - nh) / 2;
+
+        ctx.drawImage(img, ox, oy, nw, nh);
+    }
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        drawFrame(currentFrame);
+    }
+
+    // Preload all 120 JPG frames from the user's continuous tractor video
+    const basePath = "{{ url_for('static', filename='videos/frames/') }}";
+    for (let i = 0; i < totalFrames; i++) {
+        const img = new Image();
+        const padIdx = String(i).padStart(3, '0');
+        img.src = `${basePath}frame_${padIdx}.jpg`;
+        img.onload = function () {
+            if (i === 0 || Math.abs(i - currentFrame) <= 2) {
+                drawFrame(currentFrame);
+            }
+        };
+        frames[i] = img;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const dots = document.querySelectorAll('.scrolly-dot');
+    const navLinks = [
+        document.getElementById('navLink0'),
+        document.getElementById('navLink1'),
+        document.getElementById('navLink2'),
+        document.getElementById('navLink3'),
+        document.getElementById('navLink4')
+    ];
+
+    function updateNavigation(progress) {
+        let activeIdx = Math.min(4, Math.floor(progress * 5));
+        dots.forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === activeIdx);
+        });
+        navLinks.forEach((link, idx) => {
+            if (link) link.classList.toggle('active', idx === activeIdx);
+        });
+        if (promptEl) {
+            promptEl.style.opacity = progress > 0.85 ? '0' : '1';
+        }
+    }
+
+    function onScroll() {
+        const docEl = document.documentElement;
+        const scrollTop = window.scrollY || docEl.scrollTop || 0;
+        const maxScroll = Math.max(1, docEl.scrollHeight - window.innerHeight);
+        const progress = Math.max(0, Math.min(1, scrollTop / maxScroll));
+
+        targetFrame = progress * (totalFrames - 1);
+
+        if (progressBar) {
+            progressBar.style.width = `${progress * 100}%`;
+        }
+
+        updateNavigation(progress);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Smooth 60fps scrub loop (plays forward on scroll down, reverse on scroll up)
+    function renderLoop() {
+        const diff = targetFrame - currentFrame;
+        if (Math.abs(diff) > 0.01) {
+            currentFrame += diff * 0.22;
+            const rounded = Math.round(currentFrame);
+            if (rounded !== lastDrawnFrame) {
+                drawFrame(rounded);
+                lastDrawnFrame = rounded;
+            }
+        }
+        requestAnimationFrame(renderLoop);
+    }
+
+    onScroll();
+    requestAnimationFrame(renderLoop);
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const targetId = this.getAttribute('href');
+            const targetEl = document.querySelector(targetId);
+            if (targetEl) {
+                e.preventDefault();
+                targetEl.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

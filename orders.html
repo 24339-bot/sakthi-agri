@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Shop Customer Orders - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-receipt" style="color: #166534; margin-right: 6px;"></i> Agri Shop Customer Orders</h1>
+            <p>Orders placed by farmers and buyers for your agricultural supplies.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('agri_shop_dashboard') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <i class="bi bi-box-seam" style="color: #166534; margin-right: 6px;"></i> Order History
+            <span class="title-badge">{{ orders|length }} Orders</span>
+        </div>
+
+        {% if orders %}
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                {% for order in orders %}
+                <div style="border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; background: #ffffff;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                        <div>
+                            <strong style="color: #166534; font-size: 1.05rem;">{{ order.order_number }}</strong>
+                            <span style="font-size: 0.85rem; color: #6b7280; margin-left: 10px;">Date: {{ order.created_at }}</span>
+                        </div>
+                        <span class="status-pill status-{{ order.status|lower }}">{{ order.status }}</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                        <div>
+                            <div style="font-size: 0.82rem; font-weight: 700; color: #166534; text-transform: uppercase;">Product Ordered</div>
+                            <div style="font-weight: 700; font-size: 1rem; margin-top: 4px;">{{ order.item_name }}</div>
+                            <div style="font-size: 0.9rem; color: #4b5563;">Quantity: {{ order.quantity }} units | Price: ₹{{ order.unit_price }}</div>
+                            <div style="font-size: 1.1rem; font-weight: 800; color: #166534; margin-top: 6px;">Total: ₹{{ "%.2f"|format(order.total_amount) }}</div>
+                        </div>
+
+                        <div>
+                            <div style="font-size: 0.82rem; font-weight: 700; color: #166534; text-transform: uppercase;">Customer Information</div>
+                            <div style="font-size: 0.95rem; font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                                <i class="bi bi-person-fill" style="color: #166534;"></i> {{ order.buyer_name }}
+                            </div>
+                            <div style="font-size: 0.88rem; color: #4b5563; margin-top: 4px;">
+                                <i class="bi bi-telephone" style="color: #6b7280; margin-right: 4px;"></i> Phone: {{ order.buyer_phone }}
+                            </div>
+                            <div style="font-size: 0.88rem; color: #4b5563; margin-top: 4px;">
+                                <i class="bi bi-geo-alt" style="color: #6b7280; margin-right: 4px;"></i> Address: {{ order.delivery_address }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                        {% if order.status == 'Pending' %}
+                        <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
+                            <input type="hidden" name="new_status" value="Accepted">
+                            <button type="submit" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="bi bi-check-lg"></i> Accept Order
+                            </button>
+                        </form>
+                        {% elif order.status == 'Accepted' %}
+                        <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
+                            <input type="hidden" name="new_status" value="Dispatched">
+                            <button type="submit" class="btn btn-orange btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="bi bi-truck"></i> Dispatch Package
+                            </button>
+                        </form>
+                        {% elif order.status == 'Dispatched' %}
+                        <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST">
+                            <input type="hidden" name="new_status" value="Completed">
+                            <button type="submit" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="bi bi-check2-circle"></i> Complete Order
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="table-empty-state">
+                <div style="font-size: 2.8rem; margin-bottom: 10px; color: #9ca3af;">
+                    <i class="bi bi-cart"></i>
+                </div>
+                <h3>No customer orders yet</h3>
+                <p>When farmers order fertilizer or seeds from your store, the details will be shown here.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

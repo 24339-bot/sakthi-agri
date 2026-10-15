@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Nearby Machinery Rentals - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-truck" style="color: #166534; margin-right: 6px;"></i> Nearby Farm Machinery & Equipment</h1>
+            <p>Rent high-power tractors, combine harvesters, tillers, and sprayers directly from verified owners.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="products-grid">
+        {% if machineries %}
+            {% for machine in machineries %}
+            <div class="product-card">
+                <div class="product-img-box">
+                    <img src="{{ machine.image_url or 'https://images.unsplash.com/photo-1592878904946-b3cd8ae243d0?w=600' }}" alt="{{ machine.machine_name }}">
+                    <span class="product-badge-fresh" style="background: rgba(30, 64, 175, 0.9);">{{ machine.machine_type }}</span>
+                </div>
+                <div class="product-content">
+                    <div class="product-title">{{ machine.machine_name }}</div>
+                    <div class="product-farmer-meta">
+                        <i class="bi bi-geo-alt" style="color: #6b7280;"></i>
+                        <span>{{ machine.location }}</span>
+                    </div>
+
+                    <div style="background: #f8fafc; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 0.85rem; color: #4b5563;">
+                        <div>Owner: <strong>{{ machine.owner_name }}</strong></div>
+                        <div style="margin-top: 4px;">
+                            Driver Included: 
+                            {% if machine.driver_included %}
+                            <span style="color: #15803d; font-weight: 600;"><i class="bi bi-check2"></i> Yes (Experienced Driver)</span>
+                            {% else %}
+                            <span style="color: #b45309; font-weight: 600;">Machine Only</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="product-price-row">
+                        <div class="product-price">₹{{ machine.rent_rate }} <span>/ {{ machine.rate_unit }}</span></div>
+                        <span class="status-pill status-available">{{ machine.status }}</span>
+                    </div>
+
+                    <div class="product-actions" style="margin-top: 14px; display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-orange btn-sm" style="flex: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px;" onclick="openMachineryModal('{{ machine.id }}', '{{ machine.machine_name | escape }}', {{ machine.rent_rate }}, '{{ machine.rate_unit }}')">
+                            <i class="bi bi-calendar-check"></i> Book Rental
+                        </button>
+                        <a href="tel:{{ machine.contact_phone }}" class="btn btn-outline btn-sm" style="flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <i class="bi bi-telephone"></i> Call
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <div style="font-size: 2.8rem; margin-bottom: 10px; color: #9ca3af;">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <h3>No machinery currently available</h3>
+                <p style="color: #6b7280;">Farm equipment owners will list tractors and harvesters here.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Machinery Booking Modal (Fully Scrollable) -->
+<div id="machinery-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; align-items: center; justify-content: center; padding: 16px; overflow-y: auto;">
+    <div style="background: #ffffff; width: 100%; max-width: 520px; max-height: 90vh; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); margin: auto;">
+        <!-- Sticky Header -->
+        <div style="background: #166534; padding: 16px 20px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="bi bi-truck" style="font-size: 1.2rem;"></i>
+                <span style="font-weight: 700; font-size: 1.1rem;">Book Farm Machinery</span>
+            </div>
+            <button type="button" onclick="closeMachineryModal()" style="background: none; border: none; color: #ffffff; font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+
+        <!-- Scrollable Form Body -->
+        <form action="{{ url_for('book_machinery') }}" method="POST" style="padding: 20px; overflow-y: auto; flex: 1;">
+            <input type="hidden" id="modal-machine-id" name="machine_id">
+
+            <div style="margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.78rem; color: #6b7280; text-transform: uppercase; font-weight: 700;">Selected Equipment</div>
+                <div id="modal-machine-name" style="font-weight: 700; color: #166534; font-size: 1.05rem; margin-top: 2px;"></div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="modal-hours">
+                        <span>Duration (<span id="modal-rate-unit">Hours</span>) *</span>
+                    </label>
+                    <input type="number" step="0.5" min="1" id="modal-hours" name="hours" class="form-control" value="4" oninput="calcMachineRent()" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal-machine-date">Required Date *</label>
+                    <input type="date" id="modal-machine-date" name="start_date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="modal-field-location">Farm Field Location / Village *</label>
+                <input type="text" id="modal-field-location" name="field_location" class="form-control" value="{{ session.get('village', 'Vilathikulam') }}, {{ session.get('district', 'thenkasi') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="modal-machine-phone">Your Contact Phone *</label>
+                <input type="tel" id="modal-machine-phone" name="buyer_phone" class="form-control" value="{{ session.get('phone', '7305371131') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="modal-machine-notes">Farming Work Description</label>
+                <input type="text" id="modal-machine-notes" name="notes" class="form-control" placeholder="e.g. 3 Acres Paddy field rotavator tilling">
+            </div>
+
+            <!-- Price Breakdown Box -->
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: #4b5563;">
+                    <span>Rental Rate:</span>
+                    <span id="modal-machine-rate-text" style="font-weight: 600;">₹0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: #166534; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #86efac;">
+                    <span>Total Estimated Rent:</span>
+                    <span id="modal-machine-total-text">₹0.00</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; padding-bottom: 6px;">
+                <button type="submit" class="btn btn-orange btn-lg" style="flex: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="bi bi-check2"></i> Confirm & Place Machinery Booking
+                </button>
+                <button type="button" class="btn btn-outline btn-lg" onclick="closeMachineryModal()" style="flex: 1;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentMachineRate = 0;
+
+function openMachineryModal(id, name, rate, unit) {
+    currentMachineRate = rate;
+    document.getElementById('modal-machine-id').value = id;
+    document.getElementById('modal-machine-name').innerText = name;
+    document.getElementById('modal-rate-unit').innerText = unit;
+    document.getElementById('modal-machine-rate-text').innerText = `₹${rate} / ${unit}`;
+    document.getElementById('modal-machine-date').value = new Date().toISOString().split('T')[0];
+
+    calcMachineRent();
+
+    const modal = document.getElementById('machinery-modal');
+    modal.style.display = 'flex';
+}
+
+function closeMachineryModal() {
+    document.getElementById('machinery-modal').style.display = 'none';
+}
+
+function calcMachineRent() {
+    const hours = parseFloat(document.getElementById('modal-hours').value) || 0;
+    const total = hours * currentMachineRate;
+    document.getElementById('modal-machine-total-text').innerText = `₹${total.toFixed(2)}`;
+}
+</script>
+{% endblock %}

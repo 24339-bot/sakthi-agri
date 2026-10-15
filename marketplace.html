@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Agri Produce Marketplace - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-basket2" style="color: #166534; margin-right: 6px;"></i> Fresh Farm Produce Marketplace</h1>
+            <p>Direct from Tamil Nadu farmers to your doorstep with zero middlemen markup.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('view_cart') }}" class="btn btn-orange" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-cart3"></i> View Cart
+                {% if cart_count and cart_count > 0 %}
+                <span style="background: #ffffff; color: var(--accent-orange); padding: 2px 7px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; margin-left: 4px;">{{ cart_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card" style="padding: 16px 24px; margin-bottom: 24px;">
+        <form method="GET" action="{{ url_for('buyer_marketplace') }}" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+            <div style="flex: 2; min-width: 250px;">
+                <input type="text" name="search" value="{{ search_query or '' }}" class="form-control" placeholder="Search crops (Paddy, Tomato, Onion, Banana)...">
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+                <select name="category" class="form-control" onchange="this.form.submit()">
+                    <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
+                    <option value="Grains" {% if selected_category == 'Grains' %}selected{% endif %}>Grains & Cereals</option>
+                    <option value="Vegetables" {% if selected_category == 'Vegetables' %}selected{% endif %}>Fresh Vegetables</option>
+                    <option value="Fruits" {% if selected_category == 'Fruits' %}selected{% endif %}>Fresh Fruits</option>
+                    <option value="Spices" {% if selected_category == 'Spices' %}selected{% endif %}>Spices & Chillies</option>
+                    <option value="Pulses" {% if selected_category == 'Pulses' %}selected{% endif %}>Pulses & Dal</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-search"></i> Search
+            </button>
+            {% if search_query or selected_category %}
+            <a href="{{ url_for('buyer_marketplace') }}" class="btn btn-outline">Clear Filters</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid">
+        {% if crops %}
+            {% for crop in crops %}
+            <div class="product-card">
+                <div class="product-img-box">
+                    <img src="{{ crop.image_url or 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600' }}" alt="{{ crop.crop_name }}">
+                    <span class="product-badge-fresh">Fresh Farm Harvest</span>
+                </div>
+                <div class="product-content">
+                    <div class="product-title">{{ crop.crop_name }}</div>
+                    <div class="product-farmer-meta">
+                        <i class="bi bi-person-fill" style="color: #166534;"></i>
+                        <span>Farmer: <strong>{{ crop.farmer_name }}</strong> ({{ crop.location or crop.district }})</span>
+                    </div>
+
+                    {% if crop.description %}
+                    <p style="font-size: 0.82rem; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">{{ crop.description }}</p>
+                    {% endif %}
+
+                    <div style="background: #f8fafc; padding: 8px 12px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
+                        <span>Available: <strong>{{ crop.quantity }} {{ crop.unit }}</strong></span>
+                        <span>Harvest: <strong>{{ crop.harvest_date or 'Recent' }}</strong></span>
+                    </div>
+
+                    <div class="product-price-row">
+                        <div class="product-price">₹{{ crop.price_per_unit }} <span>/ {{ crop.unit }}</span></div>
+                        <span class="status-pill status-available">{{ crop.status }}</span>
+                    </div>
+
+                    <div class="product-actions">
+                        <form action="{{ url_for('add_to_cart') }}" method="POST" style="flex: 1;">
+                            <input type="hidden" name="item_type" value="crop">
+                            <input type="hidden" name="item_id" value="{{ crop.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-outline-primary btn-sm btn-block" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                                <i class="bi bi-cart-plus"></i> Add to Cart
+                            </button>
+                        </form>
+
+                        <a href="{{ url_for('crop_detail', crop_id=crop.id) }}" class="btn btn-orange btn-sm" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <i class="bi bi-lightning-charge-fill"></i> Buy Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 50px;">
+                <div style="font-size: 2.8rem; margin-bottom: 12px; color: #9ca3af;">
+                    <i class="bi bi-search"></i>
+                </div>
+                <h3>No crops matched your search</h3>
+                <p style="color: #6b7280; margin-top: 6px;">Try adjusting your search keywords or browsing all categories.</p>
+                <a href="{{ url_for('buyer_marketplace') }}" class="btn btn-primary" style="margin-top: 16px;">Browse All Crops</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Nearby Agri Shops - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-shop" style="color: #166534; margin-right: 6px;"></i> Nearby Agri Shops & Supplies</h1>
+            <p>Connect with local authorized agro dealers for certified seeds, fertilizers, and equipment.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Shops Filter / Overview -->
+    <div class="card" style="margin-bottom: 24px; padding: 18px 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <strong>Active Agro Dealers in Your District:</strong>
+                <span class="label-badge">{{ session.get('district', 'thenkasi') | capitalize }}</span>
+            </div>
+            <div style="font-size: 0.88rem; color: #6b7280;">
+                Showing seeds, certified fertilizers, and farm equipment from verified shops.
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid from Agri Shops -->
+    <div class="products-grid">
+        {% if products %}
+            {% for item in products %}
+            <div class="product-card">
+                <div class="product-img-box">
+                    <img src="{{ item.image_url or 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=600' }}" alt="{{ item.product_name }}">
+                    <span class="product-badge-fresh">{{ item.category }}</span>
+                </div>
+                <div class="product-content">
+                    <div class="product-title">{{ item.product_name }}</div>
+                    <div class="product-farmer-meta">
+                        <i class="bi bi-shop" style="color: #6b7280;"></i>
+                        <span>{{ item.shop_name or item.owner_name }} ({{ item.district or 'Local Dealer' }})</span>
+                    </div>
+                    {% if item.description %}
+                    <p style="font-size: 0.82rem; color: #6b7280; margin-bottom: 10px; line-height: 1.4;">{{ item.description }}</p>
+                    {% endif %}
+
+                    <div class="product-price-row">
+                        <div class="product-price">₹{{ item.price }} <span>/ {{ item.unit }}</span></div>
+                        <div style="font-size: 0.8rem; color: #059669; font-weight: 600;">Stock: {{ item.stock }} {{ item.unit }}s</div>
+                    </div>
+
+                    <div class="product-actions" style="margin-top: 14px; display: flex; gap: 8px;">
+                        <a href="tel:{{ item.phone }}" class="btn btn-outline btn-sm" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <i class="bi bi-telephone"></i> Call Shop
+                        </a>
+                        <form action="{{ url_for('add_to_cart') }}" method="POST" style="flex: 1;">
+                            <input type="hidden" name="item_type" value="shop_product">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-primary btn-sm btn-block" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                                <i class="bi bi-cart-plus"></i> Order
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <div style="font-size: 2.8rem; margin-bottom: 10px; color: #9ca3af;">
+                    <i class="bi bi-shop"></i>
+                </div>
+                <h3>No agri shop supplies currently listed</h3>
+                <p style="color: #6b7280;">Local agri dealers will appear here with seeds, fertilizer bags, and tools.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

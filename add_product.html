@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - Agri Shop - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-shop" style="color: #166534; margin-right: 6px;"></i> Add New Agri Product</h1>
+            <p>Publish certified farming inputs, seeds, fertilizers, or tools for local farmers.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('agri_shop_dashboard') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card" style="max-width: 850px; margin: 0 auto;">
+        <div class="card-title">
+            <i class="bi bi-box-seam" style="color: #166534; margin-right: 6px;"></i> Product Details
+        </div>
+
+        <form action="{{ url_for('add_product') }}" method="POST">
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="product_name">Product / Item Name *</label>
+                    <input type="text" id="product_name" name="product_name" class="form-control" placeholder="e.g. IFFCO Neem Coated Urea 45kg" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="category">Category *</label>
+                    <select id="category" name="category" class="form-control" required>
+                        <option value="Fertilizers">Chemical Fertilizers (Urea, DAP, Potash)</option>
+                        <option value="Bio Fertilizers">Organic & Bio-Fertilizers</option>
+                        <option value="Seeds">Certified Hybrid Seeds</option>
+                        <option value="Pesticides">Plant Protection & Pesticides</option>
+                        <option value="Tools & Sprayers">Farming Tools & Knapsack Sprayers</option>
+                        <option value="Drip Irrigation">Drip & Irrigation Supplies</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="price">Selling Price (₹) *</label>
+                    <input type="number" step="0.5" id="price" name="price" class="form-control" placeholder="e.g. 267" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="stock">Available Stock Quantity *</label>
+                    <input type="number" id="stock" name="stock" class="form-control" placeholder="e.g. 100" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="unit">Packaging / Unit Type *</label>
+                    <select id="unit" name="unit" class="form-control" required>
+                        <option value="Bag" selected>Bag (45kg/50kg)</option>
+                        <option value="Packet">Packet (1kg/5kg)</option>
+                        <option value="Bottle">Bottle / Litre</option>
+                        <option value="Unit">Unit / Machine</option>
+                        <option value="kg">Kilogram (kg)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="image_url">Product Image Link</label>
+                    <input type="url" id="image_url" name="image_url" class="form-control" placeholder="https://... or leave blank for default image">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Product Description & Application Instructions</label>
+                <textarea id="description" name="description" rows="3" class="form-control" placeholder="Dosage, manufacturing brand, government subsidy, usage instructions, etc."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-orange btn-lg" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-plus-lg"></i> Add Product to Shop
+                </button>
+                <a href="{{ url_for('agri_shop_dashboard') }}" class="btn btn-outline btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

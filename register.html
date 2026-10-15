@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(8, 24, 14, 0.72) 0%, rgba(20, 83, 45, 0.58) 100%), url('{{ url_for('static', filename='images/auth_bg.jpg') }}') center center / cover no-repeat fixed; padding: 36px 20px; position: relative;">
+    <!-- Top Left Back to Home Button -->
+    <a href="{{ url_for('index') }}" style="position: absolute; top: 24px; left: 28px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.28); color: #ffffff; font-size: 0.86rem; font-weight: 600; text-decoration: none; transition: all 0.2s ease;">
+        <i class="bi bi-arrow-left"></i> Back to Home
+    </a>
+
+    <div style="background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; width: 100%; max-width: 580px; padding: 36px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Sakthi Agri Logo" style="width: 76px; height: 76px; object-fit: contain; margin-bottom: 8px; border-radius: 14px; background: #ffffff; padding: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+            <h1 style="font-size: 1.85rem; font-weight: 800; color: #166534;">Join Sakthi Agri</h1>
+            <p style="color: #6b7280; font-size: 0.92rem; margin-top: 4px;">Choose your role and connect directly with Tamil Nadu's farming network</p>
+        </div>
+
+        <form action="{{ url_for('register') }}" method="POST">
+            <div class="form-group">
+                <label class="form-label" for="role">Register As (Account Type) *</label>
+                <select id="role" name="role" class="form-control" onchange="toggleRoleFields(this.value)" required>
+                    <option value="farmer">Farmer (Sell crops, access nearby shops &amp; rentals)</option>
+                    <option value="agri_shop">Agri Shop Owner (Sell seeds, fertilizers &amp; tools)</option>
+                    <option value="buyer">Produce Buyer (Purchase farm-fresh crops)</option>
+                    <option value="machinery">Machinery Owner (Rent tractors &amp; harvesters)</option>
+                    <option value="godown">Godown / Warehouse Owner (Rent storage space)</option>
+                </select>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="e.g. DHARANI" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="e.g. dharani@agri.com" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="phone">Mobile Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. 7305371131" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="district">District *</label>
+                    <input type="text" id="district" name="district" class="form-control" placeholder="e.g. thenkasi" required>
+                </div>
+            </div>
+
+            <div id="farmer-fields" class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="village">Village / Taluk</label>
+                    <input type="text" id="village" name="village" class="form-control" placeholder="e.g. Vilathikulam">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="land_area">Total Farm Land Area (Acres)</label>
+                    <input type="number" step="0.01" id="land_area" name="land_area" class="form-control" placeholder="e.g. 5.00" value="5.00">
+                </div>
+            </div>
+
+            <div id="shop-fields" class="form-group" style="display: none;">
+                <label class="form-label" for="shop_name">Shop / Business / Company Name</label>
+                <input type="text" id="shop_name" name="shop_name" class="form-control" placeholder="e.g. Sakthi Agro Inputs">
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="password">Create Password *</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password">Confirm Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 12px;">
+                <i class="bi bi-person-plus-fill me-1"></i> Create Account
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px; font-size: 0.88rem; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+            Already registered? <a href="{{ url_for('login') }}" style="color: #166534; font-weight: 700; text-decoration: none;">Login to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleRoleFields(role) {
+    const farmerFields = document.getElementById('farmer-fields');
+    const shopFields = document.getElementById('shop-fields');
+    
+    if (role === 'farmer') {
+        farmerFields.style.display = 'grid';
+        shopFields.style.display = 'none';
+    } else if (role === 'agri_shop' || role === 'machinery' || role === 'godown') {
+        farmerFields.style.display = 'none';
+        shopFields.style.display = 'block';
+    } else {
+        farmerFields.style.display = 'none';
+        shopFields.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

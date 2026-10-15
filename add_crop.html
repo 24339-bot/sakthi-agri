@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Crop - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-plus-circle" style="color: #166534; margin-right: 6px;"></i> Add Crop for Sale</h1>
+            <p>List your fresh farm produce with Government Regulated Benchmark Prices (அரசு நிர்ணய விலை - MSP).</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Government Fair Price Info Banner -->
+    <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+        <div style="width: 48px; height: 48px; border-radius: 10px; background: #dcfce7; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #166534; flex-shrink: 0;">
+            <i class="bi bi-shield-check"></i>
+        </div>
+        <div>
+            <div style="font-weight: 700; color: #166534; font-size: 1.05rem;">
+                Official Government Minimum Support Price (MSP / அரசு நிர்ணய விலை) Protection
+            </div>
+            <div style="font-size: 0.88rem; color: #374151; margin-top: 2px;">
+                Crops listed here are protected by Tamil Nadu Agricultural Market Board & Central Government MSP benchmarks to guarantee fair income to our farmers.
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="max-width: 850px; margin: 0 auto;">
+        <div class="card-title">
+            <i class="bi bi-card-checklist" style="color: #166534; margin-right: 6px;"></i> Crop Listing Details
+        </div>
+
+        <form action="{{ url_for('add_crop') }}" method="POST" id="crop-form">
+            <!-- Hidden GPS coordinates -->
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="crop_select">
+                        <span>Select Crop Name *</span>
+                        <span class="label-badge">Govt Approved</span>
+                    </label>
+                    <select id="crop_select" class="form-control" onchange="onCropSelected(this.value)">
+                        <option value="">-- Choose Government Supported Crop --</option>
+                        {% if gov_crops %}
+                            {% for g in gov_crops %}
+                            <option value="{{ g.crop_name }}" data-type="{{ g.crop_type }}" data-price="{{ g.price }}" data-unit="{{ g.unit }}" data-msp="{{ g.msp_year }}">
+                                {{ g.crop_name }} (₹{{ g.price }} / {{ g.unit }})
+                            </option>
+                            {% endfor %}
+                        {% endif %}
+                        <option value="custom">Other / Custom Crop (Manual Entry)</option>
+                    </select>
+
+                    <input type="text" id="crop_name" name="crop_name" class="form-control" style="margin-top: 8px; display: none;" placeholder="Enter custom crop name (e.g. Red Guava, Papaya)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="crop_type">Category / Type *</label>
+                    <select id="crop_type" name="crop_type" class="form-control" required>
+                        <option value="Grains">Grains & Cereals (Paddy, Millets, Wheat)</option>
+                        <option value="Vegetables" selected>Fresh Vegetables (Tomato, Onion, etc.)</option>
+                        <option value="Fruits">Fresh Fruits (Banana, Mango, Guava)</option>
+                        <option value="Pulses">Pulses & Lentils (Black Gram, Toor Dal)</option>
+                        <option value="Spices">Spices & Cash Crops (Chilli, Turmeric, Cotton)</option>
+                        <option value="Oilseeds">Oilseeds (Groundnut, Sesame, Coconut)</option>
+                        <option value="Cash Crops">Cash Crops (Sugarcane, Cotton)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="quantity">Available Quantity *</label>
+                    <input type="number" step="0.1" id="quantity" name="quantity" class="form-control" placeholder="e.g. 500" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="unit">Quantity Unit *</label>
+                    <select id="unit" name="unit" class="form-control" required>
+                        <option value="kg" selected>Kilograms (kg)</option>
+                        <option value="Quintal">Quintal (100 kg)</option>
+                        <option value="Bags">Bags (50kg / 75kg)</option>
+                        <option value="Bunches">Bunches (Vazhai/Banana)</option>
+                        <option value="Ton">Tons</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Price Field with Government Price Indicator -->
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="price_per_unit">
+                        <span>Price per Unit (₹) *</span>
+                        <span id="price-source-badge" class="label-badge">Govt MSP Rate</span>
+                    </label>
+                    <input type="number" step="0.5" id="price_per_unit" name="price_per_unit" class="form-control" placeholder="Select a crop to auto-load price" style="background-color: #f0fdf4; font-weight: 700; color: #166534; font-size: 1.1rem;" required readonly>
+                    <small id="price-note" style="color: #059669; font-size: 0.82rem; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="bi bi-info-circle"></i> Automatically benchmarked to official Tamil Nadu Government MSP rates.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="harvest_date">Harvest / Ready Date *</label>
+                    <input type="date" id="harvest_date" name="harvest_date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="location">
+                        <span>Farm Field Location *</span>
+                        <button type="button" onclick="detectGPSLocation()" style="background: none; border: none; color: #166534; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline; display: inline-flex; align-items: center; gap: 3px;">
+                            <i class="bi bi-crosshair"></i> Auto-detect GPS
+                        </button>
+                    </label>
+                    <input type="text" id="location" name="location" class="form-control" value="{{ session.get('village', 'Vilathikulam') }}, {{ session.get('district', 'thenkasi') }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="image_url">Crop Photo Link</label>
+                    <input type="url" id="image_url" name="image_url" class="form-control" placeholder="https://... or leave blank for default image">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Produce Quality & Grade Description</label>
+                <textarea id="description" name="description" rows="3" class="form-control" placeholder="Mention variety name (e.g. CR 1009 Sub 1), farming method (Organic / Zero Chemical), quality grade, moisture level, etc."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-orange btn-lg" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-cloud-arrow-up-fill"></i> Publish Crop Listing
+                </button>
+                <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function onCropSelected(val) {
+    const customInput = document.getElementById('crop_name');
+    const priceInput = document.getElementById('price_per_unit');
+    const unitSelect = document.getElementById('unit');
+    const typeSelect = document.getElementById('crop_type');
+    const badge = document.getElementById('price-source-badge');
+    const note = document.getElementById('price-note');
+    const select = document.getElementById('crop_select');
+
+    if (val === 'custom') {
+        customInput.style.display = 'block';
+        customInput.required = true;
+        customInput.focus();
+        priceInput.readOnly = false;
+        priceInput.style.backgroundColor = '#ffffff';
+        badge.innerText = 'Custom Rate';
+        badge.style.backgroundColor = '#fef3c7';
+        badge.style.color = '#b45309';
+        note.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Custom price entered manually.';
+        return;
+    } else {
+        customInput.style.display = 'none';
+        customInput.required = false;
+        customInput.value = val;
+    }
+
+    if (!val) {
+        priceInput.value = '';
+        return;
+    }
+
+    const selectedOption = select.options[select.selectedIndex];
+    const price = selectedOption.getAttribute('data-price');
+    const unit = selectedOption.getAttribute('data-unit');
+    const type = selectedOption.getAttribute('data-type');
+    const mspYear = selectedOption.getAttribute('data-msp') || '2026-27';
+
+    if (price) {
+        priceInput.value = price;
+        priceInput.readOnly = true;
+        priceInput.style.backgroundColor = '#f0fdf4';
+        badge.innerText = `Govt MSP (${mspYear})`;
+        badge.style.backgroundColor = '#dcfce7';
+        badge.style.color = '#15803d';
+        note.innerHTML = `<i class="bi bi-check-circle-fill"></i> Official Govt Price: <strong>₹${price} / ${unit}</strong> (Protection Guarantee)`;
+
+        // Match unit
+        if (unit) {
+            for (let i = 0; i < unitSelect.options.length; i++) {
+                if (unitSelect.options[i].value.toLowerCase() === unit.toLowerCase()) {
+                    unitSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Match category
+        if (type) {
+            for (let i = 0; i < typeSelect.options.length; i++) {
+                if (typeSelect.options[i].value.toLowerCase() === type.toLowerCase()) {
+                    typeSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    } else {
+        // Fallback: Fetch via AJAX endpoint /get_government_price
+        fetch(`/get_government_price?crop_name=${encodeURIComponent(val)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    priceInput.value = data.price;
+                    priceInput.readOnly = true;
+                    badge.innerText = `Govt MSP (${data.msp_year || '2026-27'})`;
+                    note.innerHTML = `<i class="bi bi-check-circle-fill"></i> Official Govt Price: <strong>₹${data.price} / ${data.unit}</strong>`;
+                } else {
+                    priceInput.readOnly = false;
+                }
+            });
+    }
+}
+
+function detectGPSLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                document.getElementById('latitude').value = pos.coords.latitude;
+                document.getElementById('longitude').value = pos.coords.longitude;
+                const locInput = document.getElementById('location');
+                locInput.value = `${locInput.value} (GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+                alert(`GPS Coordinates captured: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+            },
+            (err) => {
+                alert('GPS location could not be fetched: ' + err.message);
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser.');
+    }
+}
+
+// Auto-select first crop on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const select = document.getElementById('crop_select');
+    if (select && select.options.length > 1) {
+        select.selectedIndex = 1;
+        onCropSelected(select.value);
+    }
+
+    // Set default harvest date to today
+    const dateInput = document.getElementById('harvest_date');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

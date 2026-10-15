@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Produce Details - {{ crop.crop_name }} - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-flower2" style="color: #166534; margin-right: 6px;"></i> Produce Details</h1>
+            <p>Direct farm-gate listing with harvest freshness verification.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('buyer_marketplace') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Marketplace
+            </a>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 30px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 36px; align-items: start;">
+            <!-- Crop Image -->
+            <div>
+                <div style="border-radius: 12px; overflow: hidden; height: 360px; box-shadow: var(--shadow-md);">
+                    <img src="{{ crop.image_url or 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800' }}" alt="{{ crop.crop_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            </div>
+
+            <!-- Details & Purchase Form -->
+            <div>
+                <span class="label-badge" style="font-size: 0.85rem; padding: 4px 12px;">{{ crop.crop_type }}</span>
+                <h2 style="font-size: 1.8rem; font-weight: 800; color: #111827; margin: 10px 0 6px;">{{ crop.crop_name }}</h2>
+
+                <!-- Farmer Profile Mini Card -->
+                <div style="display: flex; align-items: center; gap: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px 16px; border-radius: 8px; margin: 16px 0;">
+                    <div style="width: 44px; height: 44px; border-radius: 8px; background: #dcfce7; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #166534;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #166534;">Farmer: {{ crop.farmer_name }}</div>
+                        <div style="font-size: 0.85rem; color: #4b5563;">
+                            <i class="bi bi-geo-alt"></i> {{ crop.location or crop.district }} | <i class="bi bi-telephone"></i> {{ crop.phone }}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 2.2rem; font-weight: 800; color: #166534; margin: 18px 0 10px;">
+                    ₹{{ crop.price_per_unit }} <span style="font-size: 1rem; color: #6b7280; font-weight: 500;">/ {{ crop.unit }}</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 0.9rem;">
+                    <div style="background: #f9fafb; padding: 10px; border-radius: 6px;">
+                        <span style="color: #6b7280;">Available Quantity:</span>
+                        <div style="font-weight: 700; color: #111827;">{{ crop.quantity }} {{ crop.unit }}</div>
+                    </div>
+                    <div style="background: #f9fafb; padding: 10px; border-radius: 6px;">
+                        <span style="color: #6b7280;">Harvest Date:</span>
+                        <div style="font-weight: 700; color: #111827;">{{ crop.harvest_date or 'Fresh Harvest' }}</div>
+                    </div>
+                </div>
+
+                <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+                    {{ crop.description or 'Fresh farm harvest grown using standard sustainable agricultural practices.' }}
+                </p>
+
+                <!-- Order Action Form -->
+                <form action="{{ url_for('buy_now') }}" method="POST" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+                    <input type="hidden" name="crop_id" value="{{ crop.id }}">
+                    <div class="form-group">
+                        <label class="form-label" for="order_quantity">Order Quantity ({{ crop.unit }})</label>
+                        <input type="number" id="order_quantity" name="quantity" min="1" max="{{ crop.quantity }}" value="1" class="form-control" style="font-size: 1.1rem; font-weight: 700;" required>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button type="submit" class="btn btn-orange btn-lg" style="flex: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="bi bi-lightning-charge-fill"></i> Proceed to Instant Checkout
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

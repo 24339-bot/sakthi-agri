@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Agri Shop Dashboard - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Top Header (Matches Screenshot 1) -->
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-shop" style="color: #166534; margin-right: 6px;"></i> Agri Shop Dashboard</h1>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('add_product') }}" class="btn btn-orange" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-plus-lg"></i> Add Product
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 Stat Metric Cards (Matches Screenshot 1) -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ products|length }}</div>
+            <div class="stat-label">Total Products</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ orders|length }}</div>
+            <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_stock or 0 }}</div>
+            <div class="stat-label">Stock Available</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">₹{{ "%.2f"|format(revenue or 0.0) }}</div>
+            <div class="stat-label">Revenue</div>
+        </div>
+    </div>
+
+    <!-- Products Table Card (Matches Screenshot 1) -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if products %}
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                <img src="{{ product.image_url or 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=100' }}" alt="{{ product.product_name }}" class="table-thumbnail">
+                            </td>
+                            <td><strong>{{ product.product_name }}</strong></td>
+                            <td><span class="label-badge">{{ product.category }}</span></td>
+                            <td><strong>₹{{ product.price }}</strong> / {{ product.unit }}</td>
+                            <td>
+                                {% if product.stock > 10 %}
+                                <span style="color: #15803d; font-weight: 600;">{{ product.stock }} {{ product.unit }}s</span>
+                                {% else %}
+                                <span style="color: #dc2626; font-weight: 600;">{{ product.stock }} (Low Stock)</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-outline btn-sm">Edit</a>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST" onsubmit="return confirm('Delete this product from your shop?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="table-empty-state">
+                                No products added yet. Click <strong>"+ Add Product"</strong> to get started.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

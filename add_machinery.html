@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Add Machinery - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-truck" style="color: #166534; margin-right: 6px;"></i> Add Farm Machinery for Rent</h1>
+            <p>List your tractors, harvesters, rotavators, and tillers for nearby farmers.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('machinery_dashboard') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <div class="card-title">
+            <i class="bi bi-gear" style="color: #166534; margin-right: 6px;"></i> Equipment Information
+        </div>
+
+        <form action="{{ url_for('add_machinery') }}" method="POST">
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="machine_name">Machine Model & Make *</label>
+                    <input type="text" id="machine_name" name="machine_name" class="form-control" placeholder="e.g. Mahindra 575 DI (45 HP) Tractor" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="machine_type">Machine Type *</label>
+                    <select id="machine_type" name="machine_type" class="form-control" required>
+                        <option value="Tractor">Tractor</option>
+                        <option value="Harvester">Combine Harvester</option>
+                        <option value="Power Tiller">Power Tiller</option>
+                        <option value="Rotavator">Rotavator / Cultivator</option>
+                        <option value="Sprayer">Boom / Tractor Sprayer</option>
+                        <option value="Baler">Straw Baler</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="rent_rate">Rental Rate (₹) *</label>
+                    <input type="number" step="10" id="rent_rate" name="rent_rate" class="form-control" placeholder="e.g. 850" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="rate_unit">Billing Unit *</label>
+                    <select id="rate_unit" name="rate_unit" class="form-control" required>
+                        <option value="per hour" selected>Per Hour</option>
+                        <option value="per acre">Per Acre</option>
+                        <option value="per day">Per Day</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="driver_included">Driver / Operator Included? *</label>
+                    <select id="driver_included" name="driver_included" class="form-control" required>
+                        <option value="1" selected>Yes, Operator Included</option>
+                        <option value="0">No, Machine Only</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="contact_phone">Contact Phone *</label>
+                    <input type="tel" id="contact_phone" name="contact_phone" class="form-control" value="{{ session.get('phone', '') }}" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="location">Location / Service Area *</label>
+                    <input type="text" id="location" name="location" class="form-control" value="{{ session.get('district', 'thenkasi') }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="image_url">Photo Link</label>
+                    <input type="url" id="image_url" name="image_url" class="form-control" placeholder="https://... or leave blank">
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-orange btn-lg" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-plus-lg"></i> Publish Machinery Listing
+                </button>
+                <a href="{{ url_for('machinery_dashboard') }}" class="btn btn-outline btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

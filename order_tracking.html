@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Order Tracking: {{ order.order_number }} - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-truck" style="color: #166534; margin-right: 6px;"></i> Live Order Tracking</h1>
+            <p>Order Reference: <strong>{{ order.order_number }}</strong></p>
+        </div>
+        <div class="header-actions">
+            {% if session.get('role') == 'farmer' %}
+            <a href="{{ url_for('farmer_orders', tab='my_bookings') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> My Bookings & Orders
+            </a>
+            {% else %}
+            <a href="{{ url_for('buyer_orders') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> All My Orders
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tracking Timeline Card -->
+    <div class="card order-tracking-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 30px;">
+            <div>
+                <span style="font-size: 0.85rem; color: #6b7280;">Service / Delivery Timeline:</span>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #166534;">
+                    {% if order.item_type == 'godown_booking' %}
+                    Storage Reservation Active
+                    {% elif order.item_type == 'machinery_rental' %}
+                    Scheduled as per Request
+                    {% else %}
+                    Within 24 - 48 Hours
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                {% if order.status == 'Pending' %}
+                    <span class="status-pill status-pending" style="font-size: 0.9rem; padding: 6px 16px;">
+                        <i class="bi bi-clock-history"></i>
+                        {% if order.item_type == 'crop' %}Waiting for Farmer Approval{% else %}Waiting for Provider Approval{% endif %}
+                    </span>
+                {% elif order.status == 'Accepted' %}
+                    <span class="status-pill status-accepted" style="font-size: 0.9rem; padding: 6px 16px;">
+                        <i class="bi bi-check-circle-fill"></i>
+                        {% if order.item_type == 'crop' %}Accepted by Farmer{% else %}Accepted & Confirmed{% endif %}
+                    </span>
+                {% elif order.status == 'Dispatched' %}
+                    <span class="status-pill status-in-transit" style="font-size: 0.9rem; padding: 6px 16px;">
+                        <i class="bi bi-truck"></i> In Transit / In Service
+                    </span>
+                {% elif order.status == 'Completed' %}
+                    <span class="status-pill status-completed" style="font-size: 0.9rem; padding: 6px 16px;">
+                        <i class="bi bi-check2-all"></i> Successfully Completed
+                    </span>
+                {% elif order.status == 'Rejected' %}
+                    <span class="status-pill status-rejected" style="font-size: 0.9rem; padding: 6px 16px;">
+                        <i class="bi bi-x-circle-fill"></i>
+                        {% if order.item_type == 'crop' %}Request Declined by Farmer{% else %}Request Declined{% endif %}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 4-Stage Visual Timeline -->
+        <div class="tracking-timeline">
+            <div class="timeline-line"></div>
+            {% set step_num = 1 %}
+            {% if order.status == 'Accepted' %}{% set step_num = 2 %}
+            {% elif order.status == 'Dispatched' %}{% set step_num = 3 %}
+            {% elif order.status == 'Completed' %}{% set step_num = 4 %}
+            {% elif order.status == 'Rejected' %}{% set step_num = 0 %}
+            {% endif %}
+
+            <div class="timeline-progress" style="width: {% if step_num == 1 %}15%{% elif step_num == 2 %}48%{% elif step_num == 3 %}78%{% elif step_num == 4 %}100%{% else %}0%{% endif %};"></div>
+
+            <!-- Step 1: Order Placed -->
+            <div class="tracking-step completed">
+                <div class="step-icon-circle"><i class="bi bi-file-earmark-text"></i></div>
+                <div class="step-title">Order Placed</div>
+                <div class="step-desc">{{ order.created_at[:16] }}</div>
+            </div>
+
+            <!-- Step 2: Provider Acceptance -->
+            <div class="tracking-step {% if step_num >= 2 %}completed{% elif step_num == 1 %}current{% endif %}">
+                <div class="step-icon-circle">
+                    {% if order.item_type == 'godown_booking' %}<i class="bi bi-building"></i>
+                    {% elif order.item_type == 'machinery_rental' %}<i class="bi bi-truck"></i>
+                    {% elif order.item_type == 'shop_product' %}<i class="bi bi-shop"></i>
+                    {% else %}<i class="bi bi-flower2"></i>{% endif %}
+                </div>
+                <div class="step-title">
+                    {% if order.item_type == 'godown_booking' %}Space Confirmed
+                    {% elif order.item_type == 'machinery_rental' %}Rental Confirmed
+                    {% else %}Approval & Confirmation{% endif %}
+                </div>
+                <div class="step-desc">
+                    {% if order.status == 'Pending' %}Awaiting Confirmation
+                    {% elif order.status == 'Accepted' or step_num >= 2 %}Confirmed by Provider
+                    {% elif order.status == 'Rejected' %}Declined
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Step 3: Service / Dispatch -->
+            <div class="tracking-step {% if step_num >= 3 %}completed{% elif step_num == 2 %}current{% endif %}">
+                <div class="step-icon-circle"><i class="bi bi-truck"></i></div>
+                <div class="step-title">
+                    {% if order.item_type == 'godown_booking' %}Storage Ready
+                    {% elif order.item_type == 'machinery_rental' %}Machinery Deployed
+                    {% else %}In Transit / Dispatch{% endif %}
+                </div>
+                <div class="step-desc">
+                    {% if step_num >= 3 %}Active / In Progress
+                    {% else %}Upcoming
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Step 4: Completed -->
+            <div class="tracking-step {% if step_num == 4 %}completed{% endif %}">
+                <div class="step-icon-circle"><i class="bi bi-check-circle"></i></div>
+                <div class="step-title">
+                    {% if order.item_type == 'godown_booking' %}Stored Safely
+                    {% elif order.item_type == 'machinery_rental' %}Work Done
+                    {% else %}Delivered{% endif %}
+                </div>
+                <div class="step-desc">
+                    {% if step_num == 4 %}Completed Successfully
+                    {% else %}Final Step
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 36px; padding-top: 24px; border-top: 1px solid #f1f5f9;">
+            <!-- Produce / Service Breakdown -->
+            <div style="background: #f8fafc; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #166534; text-transform: uppercase; margin-bottom: 10px;">
+                    {% if order.item_type == 'godown_booking' %}Storage Details
+                    {% elif order.item_type == 'machinery_rental' %}Machinery Details
+                    {% else %}Product Details{% endif %}
+                </div>
+                <div style="font-size: 1.1rem; font-weight: 700;">{{ order.item_name }}</div>
+                <div style="font-size: 0.9rem; color: #4b5563; margin-top: 4px;">
+                    Quantity / Duration: <strong>{{ order.quantity }} units</strong>
+                </div>
+                <div style="font-size: 0.9rem; color: #4b5563; margin-top: 2px;">Rate: ₹{{ order.unit_price }}</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: #166534; margin-top: 8px;">
+                    Total Amount: ₹{{ "%.2f"|format(order.total_amount) }}
+                </div>
+                <div style="margin-top: 8px; font-size: 0.85rem;">
+                    Payment: <span class="status-pill status-paid">{{ order.payment_method }} ({{ order.payment_status }})</span>
+                    {% if order.razorpay_payment_id %}
+                    <span style="font-family: monospace; font-size: 0.75rem; color: #6b7280;">({{ order.razorpay_payment_id }})</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Provider Contact -->
+            <div style="background: #f8fafc; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #166534; text-transform: uppercase; margin-bottom: 10px;">
+                    {% if order.item_type == 'godown_booking' %}<i class="bi bi-building"></i> Godown Provider
+                    {% elif order.item_type == 'machinery_rental' %}<i class="bi bi-truck"></i> Machinery Owner
+                    {% elif order.item_type == 'shop_product' %}<i class="bi bi-shop"></i> Agri Shop Dealer
+                    {% else %}<i class="bi bi-flower2"></i> Direct Farmer{% endif %}
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700;">{{ order.seller_name }}</div>
+                <div style="font-size: 0.9rem; color: #4b5563; margin-top: 4px;">
+                    <i class="bi bi-geo-alt" style="color: #6b7280; margin-right: 4px;"></i> District / Location: {{ order.seller_district }}
+                </div>
+                <div style="font-size: 0.9rem; color: #4b5563; margin-top: 4px;">
+                    <i class="bi bi-telephone" style="color: #6b7280; margin-right: 4px;"></i> Phone: {{ order.seller_phone }}
+                </div>
+                {% if order.seller_phone %}
+                <a href="tel:{{ order.seller_phone }}" class="btn btn-outline-primary btn-sm" style="margin-top: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-telephone"></i> Call Provider for Updates
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Delivery / Destination Address -->
+            <div style="background: #f8fafc; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #166534; text-transform: uppercase; margin-bottom: 10px;">
+                    {% if order.item_type == 'godown_booking' %}Storage Location / Notes
+                    {% elif order.item_type == 'machinery_rental' %}Field Location / Notes
+                    {% else %}Delivery Destination{% endif %}
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-person-fill" style="color: #166534;"></i> {{ order.buyer_name }}
+                </div>
+                <div style="font-size: 0.9rem; color: #4b5563; margin-top: 4px;">
+                    <i class="bi bi-telephone" style="color: #6b7280; margin-right: 4px;"></i> {{ order.buyer_phone or order.buyer_contact }}
+                </div>
+                <div style="font-size: 0.9rem; color: #4b5563; margin-top: 4px;">
+                    <i class="bi bi-geo-alt" style="color: #6b7280; margin-right: 4px;"></i> {{ order.delivery_address }}
+                </div>
+                {% if order.farmer_notes %}
+                <div style="font-size: 0.85rem; color: #166534; margin-top: 6px; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <strong>Note:</strong> {{ order.farmer_notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

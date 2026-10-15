@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}My Crops - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-flower2" style="color: #166534; margin-right: 6px;"></i> My Crops Management</h1>
+            <p>Monitor your active farm produce listings, update stock levels, and set availability.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('add_crop') }}" class="btn btn-orange" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-plus-lg"></i> Add New Crop
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <i class="bi bi-card-checklist" style="color: #166534; margin-right: 6px;"></i> Active Farm Listings
+            <span class="title-badge">{{ crops|length }} Total</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Crop Name</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Price/Unit</th>
+                        <th>Harvest Date</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Availability Toggle</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if crops %}
+                        {% for crop in crops %}
+                        <tr>
+                            <td>
+                                <img src="{{ crop.image_url or 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100' }}" alt="{{ crop.crop_name }}" class="table-thumbnail">
+                            </td>
+                            <td>
+                                <strong>{{ crop.crop_name }}</strong>
+                                {% if crop.description %}
+                                <div style="font-size: 0.78rem; color: #6b7280; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ crop.description }}</div>
+                                {% endif %}
+                            </td>
+                            <td><span class="label-badge">{{ crop.crop_type }}</span></td>
+                            <td>{{ crop.quantity }} {{ crop.unit }}</td>
+                            <td><strong>₹{{ crop.price_per_unit }}</strong> / {{ crop.unit }}</td>
+                            <td>{{ crop.harvest_date or 'Ready' }}</td>
+                            <td>{{ crop.location }}</td>
+                            <td>
+                                {% if crop.status == 'Available' %}
+                                <span class="status-pill status-available">Available</span>
+                                {% else %}
+                                <span class="status-pill status-sold-out">Sold Out</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{{ url_for('toggle_crop_status', crop_id=crop.id) }}" method="POST" style="display:inline;">
+                                    {% if crop.status == 'Available' %}
+                                    <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.75rem;">Mark Sold Out</button>
+                                    {% else %}
+                                    <button type="submit" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;">Mark Available</button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <a href="{{ url_for('edit_crop', crop_id=crop.id) }}" class="btn btn-outline btn-sm">Edit</a>
+                                    <form action="{{ url_for('delete_crop', crop_id=crop.id) }}" method="POST" onsubmit="return confirm('Delete this crop listing?');" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="10" class="table-empty-state">
+                                No crops listed yet. Click <strong>"+ Add New Crop"</strong> to publish your farm harvest.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

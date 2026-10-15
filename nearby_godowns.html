@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Nearby Godowns & Cold Storages - Sakthi Agri{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="top-header">
+        <div class="header-title-box">
+            <h1><i class="bi bi-building" style="color: #166534; margin-right: 6px;"></i> Nearby Godowns & Cold Storage</h1>
+            <p>Safely store your agricultural produce, grains, and perishables at secure nearby warehouses.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="products-grid">
+        {% if godowns %}
+            {% for godown in godowns %}
+            <div class="product-card">
+                <div class="product-img-box">
+                    <img src="{{ godown.image_url or 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600' }}" alt="{{ godown.godown_name }}">
+                    <span class="product-badge-fresh" style="background: rgba(14, 116, 144, 0.9);">{{ godown.godown_type }}</span>
+                </div>
+                <div class="product-content">
+                    <div class="product-title">{{ godown.godown_name }}</div>
+                    <div class="product-farmer-meta">
+                        <i class="bi bi-geo-alt" style="color: #6b7280;"></i>
+                        <span>{{ godown.location }}</span>
+                    </div>
+
+                    <div style="background: #f8fafc; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 0.85rem; color: #4b5563;">
+                        <div>Available: <strong style="color: #15803d;">{{ godown.available_capacity }} {{ godown.capacity_unit }}</strong> / {{ godown.total_capacity }} {{ godown.capacity_unit }}</div>
+                        <div style="margin-top: 4px;">
+                            Climate Control: 
+                            {% if godown.temperature_controlled %}
+                            <span style="color: #0284c7; font-weight: 600;"><i class="bi bi-snow"></i> Cold Storage (+2°C to +8°C)</span>
+                            {% else %}
+                            <span style="color: #4b5563; font-weight: 600;">Dry Ventilated Warehouse</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="product-price-row">
+                        <div class="product-price">₹{{ godown.rent_rate }} <span>/ {{ godown.rate_unit }}</span></div>
+                        <span class="status-pill status-available">{{ godown.status }}</span>
+                    </div>
+
+                    <div class="product-actions" style="margin-top: 14px; display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-orange btn-sm" style="flex: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px;" onclick="openBookingModal('{{ godown.id }}', '{{ godown.godown_name | escape }}', {{ godown.rent_rate }}, {{ godown.available_capacity }}, '{{ godown.capacity_unit }}')">
+                            <i class="bi bi-calendar-check"></i> Book Storage Space
+                        </button>
+                        <a href="tel:{{ godown.contact_phone }}" class="btn btn-outline btn-sm" style="flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                            <i class="bi bi-telephone"></i> Call
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <div style="font-size: 2.8rem; margin-bottom: 10px; color: #9ca3af;">
+                    <i class="bi bi-building"></i>
+                </div>
+                <h3>No godowns currently listed</h3>
+                <p style="color: #6b7280;">Warehouses and cold storages in your district will be shown here.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Godown Booking Modal (Fully Scrollable) -->
+<div id="godown-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; align-items: center; justify-content: center; padding: 16px; overflow-y: auto;">
+    <div style="background: #ffffff; width: 100%; max-width: 520px; max-height: 90vh; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); margin: auto;">
+        <!-- Sticky Header -->
+        <div style="background: #166534; padding: 16px 20px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="bi bi-building" style="font-size: 1.2rem;"></i>
+                <span style="font-weight: 700; font-size: 1.1rem;">Book Storage Facility</span>
+            </div>
+            <button type="button" onclick="closeBookingModal()" style="background: none; border: none; color: #ffffff; font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+
+        <!-- Scrollable Form Body -->
+        <form action="{{ url_for('book_godown') }}" method="POST" style="padding: 20px; overflow-y: auto; flex: 1;">
+            <input type="hidden" id="modal-godown-id" name="godown_id">
+
+            <div style="margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.78rem; color: #6b7280; text-transform: uppercase; font-weight: 700;">Selected Godown / Cold Storage</div>
+                <div id="modal-godown-name" style="font-weight: 700; color: #166534; font-size: 1.05rem; margin-top: 2px;"></div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="modal-quantity">
+                        <span>Space Needed (<span id="modal-unit-label">Tons</span>) *</span>
+                    </label>
+                    <input type="number" step="0.5" min="1" id="modal-quantity" name="quantity" class="form-control" value="5" oninput="calcGodownRent()" required>
+                    <small id="modal-avail-note" style="color: #059669; font-size: 0.78rem; font-weight: 600;"></small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal-duration">Duration (Months) *</label>
+                    <input type="number" min="1" max="24" id="modal-duration" name="duration_months" class="form-control" value="2" oninput="calcGodownRent()" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="modal-crop-name">Crop / Produce to Store *</label>
+                    <input type="text" id="modal-crop-name" name="crop_name" class="form-control" placeholder="e.g. Ponni Paddy, Dry Chilli" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal-start-date">Storage Start Date *</label>
+                    <input type="date" id="modal-start-date" name="start_date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="modal-phone">Your Contact Phone *</label>
+                <input type="tel" id="modal-phone" name="buyer_phone" class="form-control" value="{{ session.get('phone', '7305371131') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="modal-notes">Storage Requirements / Notes</label>
+                <input type="text" id="modal-notes" name="notes" class="form-control" placeholder="e.g. Moisture-free bags, temperature preference">
+            </div>
+
+            <!-- Price Breakdown Box -->
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: #4b5563;">
+                    <span>Monthly Rate:</span>
+                    <span id="modal-rate-text" style="font-weight: 600;">₹0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: #166534; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #86efac;">
+                    <span>Total Estimated Rent:</span>
+                    <span id="modal-total-text">₹0.00</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; padding-bottom: 6px;">
+                <button type="submit" class="btn btn-orange btn-lg" style="flex: 2; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="bi bi-check2"></i> Confirm & Place Booking Request
+                </button>
+                <button type="button" class="btn btn-outline btn-lg" onclick="closeBookingModal()" style="flex: 1;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentRate = 0;
+
+function openBookingModal(id, name, rate, avail, unit) {
+    currentRate = rate;
+    document.getElementById('modal-godown-id').value = id;
+    document.getElementById('modal-godown-name').innerText = name;
+    document.getElementById('modal-unit-label').innerText = unit;
+    document.getElementById('modal-avail-note').innerText = `Max Available: ${avail} ${unit}`;
+    document.getElementById('modal-quantity').max = avail;
+    document.getElementById('modal-rate-text').innerText = `₹${rate} / ${unit} / month`;
+    
+    // Set default date to today
+    document.getElementById('modal-start-date').value = new Date().toISOString().split('T')[0];
+
+    calcGodownRent();
+
+    const modal = document.getElementById('godown-modal');
+    modal.style.display = 'flex';
+}
+
+function closeBookingModal() {
+    document.getElementById('godown-modal').style.display = 'none';
+}
+
+function calcGodownRent() {
+    const qty = parseFloat(document.getElementById('modal-quantity').value) || 0;
+    const months = parseInt(document.getElementById('modal-duration').value) || 0;
+    const total = qty * months * currentRate;
+    document.getElementById('modal-total-text').innerText = `₹${total.toFixed(2)}`;
+}
+</script>
+{% endblock %}
